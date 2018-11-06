@@ -1,0 +1,31 @@
+sudo: false
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
+
+services:
+  - mysql
+
+language: php
+
+php:
+  - 7.1
+
+env:
+  global:
+    - JAVA_HOME=/usr/lib/jvm/java-8-oracle
+    - TEST_DIR=$TRAVIS_BUILD_DIR/test WCMF_BASE_DIR=$TRAVIS_BUILD_DIR
+
+before_script:
+  - mysql -e 'CREATE DATABASE wcmf_testapp;'
+  - composer self-update
+  - composer install
+
+  - cd $WCMF_BASE_DIR/build && ant generate && ant dist
+  - chmod +x ../dist/vendor/phpunit/phpunit/phpunit
+
+  - phantomjs --webdriver=8001 &
+
+script:
+  - cd $TEST_DIR &&  ../dist/vendor/phpunit/phpunit/phpunit --bootstrap bootstrap.php -c configuration.xml
